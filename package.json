@@ -1,0 +1,39 @@
+{
+  "name": "ecommerce-platform",
+  "version": "1.0.0",
+  "description": "",
+  "main": "index.js",
+  "type": "module",
+  "scripts": {
+    "auth:dev": "npm --prefix services/auth-service run dev",
+    "user:dev": "npm --prefix services/user-service run dev",
+    "product:dev": "npm --prefix services/product-service run dev",
+    "cart:dev": "npm --prefix services/cart-service run dev",
+    "order:dev": "npm --prefix services/order-service run dev",
+    "payment:dev": "npm --prefix services/payment-service run dev",
+    "role:dev": "npm --prefix services/role-service run dev",
+    "github:dev": "npm --prefix services/github-service run dev",
+    "taskmanager:dev": "npm --prefix services/taskmanager-service run dev",
+    "note:dev": "npm --prefix services/note-service run dev",
+    "gateway:dev": "npm --prefix gateway run dev",
+    "dev": "concurrently -k -n AUTH,USER,PRODUCT,CART,ORDER,PAYMENT,ROLE,GITHUB,TASKMANAGER,NOTE,GATEWAY -c blue,green,yellow,magenta,red,orange,purple,gray,pink,brown,cyan \"npm run auth:dev\" \"npm run user:dev\" \"npm run product:dev\" \"npm run cart:dev\" \"npm run order:dev\" \"npm run payment:dev\" \"npm run role:dev\" \"npm run github:dev\" \"npm run taskmanager:dev\" \"npm run note:dev\" \"npm run gateway:dev\""
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "dependencies": {
+    "bcryptjs": "^3.0.3",
+    "concurrently": "^9.2.1",
+    "cors": "^2.8.6",
+    "dotenv": "^17.4.2",
+    "express": "^5.2.1",
+    "express-rate-limit": "^8.4.1",
+    "helmet": "^8.1.0",
+    "jsonwebtoken": "^9.0.3",
+    "kafkajs": "^2.2.4",
+    "mongoose": "^9.6.1",
+    "morgan": "^1.10.1",
+    "multer": "^2.1.1",
+    "nodemon": "^3.1.14"
+  }
+}
