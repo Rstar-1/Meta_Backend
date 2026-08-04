@@ -12,10 +12,8 @@
     "order:dev": "npm --prefix services/order-service run dev",
     "payment:dev": "npm --prefix services/payment-service run dev",
     "role:dev": "npm --prefix services/role-service run dev",
-    "taskmanager:dev": "npm --prefix services/taskmanager-service run dev",
-    "note:dev": "npm --prefix services/note-service run dev",
     "gateway:dev": "npm --prefix gateway run dev",
-    "dev": "concurrently -k -n AUTH,USER,PRODUCT,CART,ORDER,PAYMENT,ROLE,TASKMANAGER,NOTE,GATEWAY -c blue,green,yellow,magenta,red,orange,purple,pink,brown,cyan \"npm run auth:dev\" \"npm run user:dev\" \"npm run product:dev\" \"npm run cart:dev\" \"npm run order:dev\" \"npm run payment:dev\" \"npm run role:dev\" \"npm run taskmanager:dev\" \"npm run note:dev\" \"npm run gateway:dev\""
+    "dev": "concurrently -k -n AUTH,USER,PRODUCT,CART,ORDER,PAYMENT,ROLE,GATEWAY -c blue,green,yellow,magenta,red,orange,purple,cyan \"npm run auth:dev\" \"npm run user:dev\" \"npm run product:dev\" \"npm run cart:dev\" \"npm run order:dev\" \"npm run payment:dev\" \"npm run role:dev\" \"npm run gateway:dev\""
   },
   "keywords": [],
   "author": "",

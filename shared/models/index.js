@@ -6,8 +6,6 @@ import Product from "./Product.model.js";
 import Cart from "./Cart.model.js";
 import Order from "./Order.model.js";
 import Payment from "./Payment.model.js";
-import Task from "./Task.model.js";
-import Note from "./Note.model.js";
 
 export { 
   User, 
@@ -17,7 +15,5 @@ export {
   Product, 
   Cart, 
   Order, 
-  Payment,
-  Task,
-  Note
+  Payment
 };

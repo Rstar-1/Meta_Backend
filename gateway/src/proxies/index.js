@@ -5,8 +5,6 @@ import cartProxy from "./cart.proxy.js";
 import orderProxy from "./order.proxy.js";
 import paymentProxy from "./payment.proxy.js";
 import roleProxy from "./role.proxy.js";
-import taskmanagerProxy from "./taskmanager.proxy.js";
-import noteProxy from "./note.proxy.js";
 
 export { 
   authProxy, 
@@ -15,7 +13,5 @@ export {
   cartProxy, 
   orderProxy, 
   paymentProxy, 
-  roleProxy, 
-  taskmanagerProxy,
-  noteProxy
+  roleProxy
 };

@@ -6,9 +6,7 @@ import {
   cartProxy, 
   orderProxy, 
   paymentProxy,
-  roleProxy,
-  taskmanagerProxy,
-  noteProxy
+  roleProxy
 } from "../proxies/index.js";
 import healthRoutes from "./health.routes.js";
 
@@ -21,8 +19,6 @@ router.use(cartProxy);
 router.use(orderProxy);
 router.use(paymentProxy);
 router.use(roleProxy);
-router.use(taskmanagerProxy);
-router.use(noteProxy);
 router.use("/healthgateway", healthRoutes);
 
 export default router;
