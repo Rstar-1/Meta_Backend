@@ -1,6 +1,6 @@
 import express from "express";
-import * as orderController from "../modules/orders/order.controller.js";
-import { middleware } from "../../../../shared/index.js";
+import * as orderController from "./order.controller.js";
+import { middleware } from "../../../../../shared/index.js";
 
 const { authMiddleware, authorizeRoles } = middleware;
 const router = express.Router();

@@ -1,6 +1,6 @@
 import express from "express";
 import { middleware, utils } from "../../../shared/index.js";
-import orderRoutes from "./routes/order.routes.js";
+import mainRoutes from "./routes/index.js";
 
 
 
@@ -19,7 +19,7 @@ app.get("/health", (req, res) => {
 });
 
 // ================= ROUTES =================
-app.use("/api/orders", orderRoutes);
+app.use("/api", mainRoutes);
 
 // ================= GLOBAL ERROR HANDLER =================
 app.use(middleware.errorMiddleware);

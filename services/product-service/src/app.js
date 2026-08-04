@@ -1,8 +1,7 @@
 import express from "express"
 import { middleware, utils } from "../../../shared/index.js"
 
-import productRoutes from "./routes/product.routes.js"
-import categoryRoutes from "./routes/category.routes.js"
+import mainRoutes from "./routes/index.js"
 
 
 
@@ -21,8 +20,7 @@ app.get("/health", (req, res) => {
 })
 
 // ================= ROUTES =================
-app.use("/api/products", productRoutes)
-app.use("/api/categories", categoryRoutes)
+app.use("/api", mainRoutes)
 
 // ================= GLOBAL ERROR HANDLER =================
 app.use(middleware.errorMiddleware)

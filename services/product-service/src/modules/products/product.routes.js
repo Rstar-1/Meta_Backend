@@ -5,9 +5,9 @@ import {
   getProductById,
   updateProduct,
   deleteProduct,
-} from "../modules/products/product.controller.js";
+} from "./product.controller.js";
 
-import { middleware } from "../../../../shared/index.js";
+import { middleware } from "../../../../../shared/index.js";
 const { authMiddleware, checkPermission } = middleware;
 
 const router = express.Router();

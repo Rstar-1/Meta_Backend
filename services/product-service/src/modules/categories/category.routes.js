@@ -5,9 +5,9 @@ import {
   getCategoryById,
   updateCategory,
   deleteCategory,
-} from "../modules/categories/category.controller.js";
+} from "./category.controller.js";
 
-import { middleware } from "../../../../shared/index.js";
+import { middleware } from "../../../../../shared/index.js";
 const { authMiddleware, checkPermission } = middleware;
 
 const router = express.Router();
