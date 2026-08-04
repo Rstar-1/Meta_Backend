@@ -7,7 +7,6 @@ import {
   orderProxy, 
   paymentProxy,
   roleProxy,
-  githubProxy,
   taskmanagerProxy,
   noteProxy
 } from "../proxies/index.js";
@@ -22,7 +21,6 @@ router.use(cartProxy);
 router.use(orderProxy);
 router.use(paymentProxy);
 router.use(roleProxy);
-router.use(githubProxy);
 router.use(taskmanagerProxy);
 router.use(noteProxy);
 router.use("/healthgateway", healthRoutes);
