@@ -32,3 +32,8 @@ export const deleteCategory = asyncHandler(async (req, res) => {
   await service.deleteCategory(req.params.id);
   return successResponse(res, null, "Category deleted");
 });
+
+export const seedCategories = asyncHandler(async (req, res) => {
+  const count = await service.seedCategories(req.user.id, req.user.email);
+  return successResponse(res, { seededCount: count }, "Categories seeded successfully");
+});

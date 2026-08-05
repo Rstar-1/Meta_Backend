@@ -11,6 +11,13 @@ const { authMiddleware, upload, uploadErrorHandler, checkPermission } = middlewa
 
 const router = express.Router();
 
+const canUpdateUser = (req, res, next) => {
+  if (req.user && req.user.id === req.params.id) {
+    return next();
+  }
+  return checkPermission("USER_UPDATE")(req, res, next);
+};
+
 /* ================= USERS ================= */
 
 router.get(
@@ -29,7 +36,7 @@ router.get(
 router.put(
   "/:id",
   authMiddleware,
-  checkPermission("USER_UPDATE"),
+  canUpdateUser,
   updateUser
 );
 
@@ -38,7 +45,6 @@ router.put(
 router.post(
   "/upload-documents",
   authMiddleware,
-  checkPermission("USER_UPDATE"),
   upload.fields([
     { name: "gstCertificate", maxCount: 1 },
     { name: "panCard", maxCount: 1 },

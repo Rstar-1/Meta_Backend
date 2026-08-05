@@ -5,6 +5,7 @@ import {
   getCategoryById,
   updateCategory,
   deleteCategory,
+  seedCategories,
 } from "./category.controller.js";
 
 import { middleware } from "../../../../../shared/index.js";
@@ -14,6 +15,13 @@ const router = express.Router();
 
 router.get("/", getCategories);
 router.get("/:id", getCategoryById);
+
+router.post(
+  "/seed",
+  authMiddleware,
+  checkPermission("CATEGORY_CREATE"),
+  seedCategories
+);
 
 router.post(
   "/",

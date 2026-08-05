@@ -42,6 +42,36 @@ const categorySchema = new mongoose.Schema(
       },
     ],
 
+    icon: {
+      type: String,
+      default: "",
+    },
+
+    description: {
+      type: String,
+      default: "",
+    },
+
+    number: {
+      type: String,
+      default: "",
+    },
+
+    accentColor: {
+      type: String,
+      default: "",
+    },
+
+    bgColor: {
+      type: String,
+      default: "",
+    },
+
+    iconName: {
+      type: String,
+      default: "",
+    },
+
     isActive: {
       type: Boolean,
       default: true,
@@ -54,5 +84,16 @@ const categorySchema = new mongoose.Schema(
   },
   { timestamps: true, versionKey: false }
 );
+
+categorySchema.pre("validate", function () {
+  if (this.name && !this.slug) {
+    this.slug = this.name
+      .toLowerCase()
+      .trim()
+      .replace(/[^\w\s-]/g, "")
+      .replace(/[\s_-]+/g, "-")
+      .replace(/^-+|-+$/g, "");
+  }
+});
 
 export default mongoose.model("Category", categorySchema);

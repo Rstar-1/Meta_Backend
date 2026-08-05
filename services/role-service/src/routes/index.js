@@ -12,7 +12,6 @@ const router = express.Router();
 router.use(
   "/roles",
   authMiddleware,
-  checkPermission(roles.ADMIN),
   roleRoutes
 );
 
