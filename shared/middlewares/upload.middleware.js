@@ -33,11 +33,13 @@ const fileFilter = (req, file, cb) => {
     "image/jpeg",
     "image/png",
     "image/jpg",
+    "image/webp",
+    "image/svg+xml",
     "application/pdf",
   ];
 
   if (!allowedTypes.includes(file.mimetype)) {
-    return cb(new Error("Only JPG, PNG, PDF allowed"), false);
+    return cb(new Error("Only JPG, PNG, WEBP, SVG, PDF allowed"), false);
   }
 
   cb(null, true);

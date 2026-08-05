@@ -13,7 +13,7 @@ export const checkPermission = (requiredPermission) => {
         });
       }
 
-      if (user.role === roles.ADMIN) {
+      if (user.role === roles.ADMIN || (user.role === roles.VENDOR && requiredPermission && requiredPermission.startsWith("CATEGORY_"))) {
         return next();
       }
 

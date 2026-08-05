@@ -15,32 +15,11 @@ const categorySchema = new mongoose.Schema(
       lowercase: true,
     },
 
-    parentId: {
-      type: mongoose.Schema.Types.ObjectId,
-      ref: "Category",
-      default: null,
-    },
-
     createdBy: {
       type: mongoose.Schema.Types.ObjectId,
       ref: "User",
       required: true,
     },
-
-    createdByEmail: {
-      type: String,
-      required: true,
-      lowercase: true,
-      trim: true,
-    },
-
-    attributes: [
-      {
-        name: String,
-        type: String,
-        options: [String],
-      },
-    ],
 
     icon: {
       type: String,

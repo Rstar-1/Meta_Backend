@@ -40,7 +40,7 @@ export const deleteCategory = async (id) => {
   return { success: true };
 };
 
-export const seedCategories = async (createdBy, createdByEmail) => {
+export const seedCategories = async (createdBy) => {
   const defaultCategories = [
     {
       name: "PVC Curtain",
@@ -100,8 +100,7 @@ export const seedCategories = async (createdBy, createdByEmail) => {
     if (!exists) {
       await Category.create({
         ...cat,
-        createdBy,
-        createdByEmail
+        createdBy
       });
       seededCount++;
     }

@@ -9,7 +9,7 @@ import {
 } from "./category.controller.js";
 
 import { middleware } from "../../../../../shared/index.js";
-const { authMiddleware, checkPermission } = middleware;
+const { authMiddleware, checkPermission, upload, uploadErrorHandler } = middleware;
 
 const router = express.Router();
 
@@ -27,6 +27,8 @@ router.post(
   "/",
   authMiddleware,
   checkPermission("CATEGORY_CREATE"),
+  upload.single("icon"),
+  uploadErrorHandler,
   createCategory
 );
 
@@ -34,6 +36,8 @@ router.put(
   "/:id",
   authMiddleware,
   checkPermission("CATEGORY_UPDATE"),
+  upload.single("icon"),
+  uploadErrorHandler,
   updateCategory
 );
 

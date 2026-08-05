@@ -7,5 +7,6 @@ const router = express.Router();
 // Route to product-service for products and categories
 router.use("/api/products", createProxy(env.PRODUCT_SERVICE_URL));
 router.use("/api/categories", createProxy(env.PRODUCT_SERVICE_URL));
+router.use("/uploads", createProxy(env.PRODUCT_SERVICE_URL));
 
 export default router;

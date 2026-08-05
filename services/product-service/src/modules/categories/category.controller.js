@@ -3,29 +3,61 @@ import { utils } from "../../../../../shared/index.js";
 
 const { asyncHandler, successResponse } = utils;
 
+const formatCategoryIcon = (category, req) => {
+  if (category && category.icon && (category.icon.startsWith("/uploads/") || category.icon.startsWith("uploads/"))) {
+    const cleanPath = category.icon.startsWith("/") ? category.icon : `/${category.icon}`;
+    const protocol = req.headers["x-forwarded-proto"] || req.protocol || "http";
+    const host = req.headers["x-forwarded-host"] || req.get("host");
+    category.icon = `${protocol}://${host}${cleanPath}`;
+  }
+  return category;
+};
+
 export const createCategory = asyncHandler(async (req, res) => {
   const data = { 
     ...req.body, 
-    createdBy: req.user.id,
-    createdByEmail: req.user.email 
+    createdBy: req.user.id
   };
+  if (req.file) {
+    data.icon = `/uploads/${req.file.filename}`;
+  }
   const category = await service.createCategory(data);
-  return successResponse(res, category, "Category created", 201);
+  const doc = category.toObject ? category.toObject() : category;
+  formatCategoryIcon(doc, req);
+  return successResponse(res, doc, "Category created", 201);
 });
 
 export const getCategories = asyncHandler(async (req, res) => {
   const categories = await service.getCategories(req.query);
-  return successResponse(res, categories, "Categories fetched");
+  const formatted = categories.map(cat => {
+    const doc = cat.toObject ? cat.toObject() : cat;
+    return formatCategoryIcon(doc, req);
+  });
+  return successResponse(res, formatted, "Categories fetched");
 });
 
 export const getCategoryById = asyncHandler(async (req, res) => {
   const category = await service.getCategoryById(req.params.id);
-  return successResponse(res, category, "Category fetched");
+  if (category) {
+    const doc = category.toObject ? category.toObject() : category;
+    formatCategoryIcon(doc, req);
+    return successResponse(res, doc, "Category fetched");
+  }
+  return successResponse(res, null, "Category not found");
 });
 
 export const updateCategory = asyncHandler(async (req, res) => {
-  const category = await service.updateCategory(req.params.id, req.body);
-  return successResponse(res, category, "Category updated");
+  const data = { ...req.body };
+  if (req.file) {
+    data.icon = `/uploads/${req.file.filename}`;
+  }
+  const category = await service.updateCategory(req.params.id, data);
+  if (category) {
+    const doc = category.toObject ? category.toObject() : category;
+    formatCategoryIcon(doc, req);
+    return successResponse(res, doc, "Category updated");
+  }
+  return successResponse(res, null, "Category not found");
 });
 
 export const deleteCategory = asyncHandler(async (req, res) => {
@@ -34,6 +66,6 @@ export const deleteCategory = asyncHandler(async (req, res) => {
 });
 
 export const seedCategories = asyncHandler(async (req, res) => {
-  const count = await service.seedCategories(req.user.id, req.user.email);
+  const count = await service.seedCategories(req.user.id);
   return successResponse(res, { seededCount: count }, "Categories seeded successfully");
 });

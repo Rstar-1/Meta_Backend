@@ -7,6 +7,7 @@ export const createProxy = (target) => {
     target,
     changeOrigin: true,
     ws: true,
+    xfwd: true,
     timeout: 60000,
     proxyTimeout: 60000,
     logLevel: "debug",
