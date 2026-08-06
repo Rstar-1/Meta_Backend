@@ -21,10 +21,20 @@ export const createCategory = asyncHandler(async (req, res) => {
   if (req.file) {
     data.icon = `/uploads/${req.file.filename}`;
   }
-  const category = await service.createCategory(data);
-  const doc = category.toObject ? category.toObject() : category;
-  formatCategoryIcon(doc, req);
-  return successResponse(res, doc, "Category created", 201);
+  try {
+    const category = await service.createCategory(data);
+    const doc = category.toObject ? category.toObject() : category;
+    formatCategoryIcon(doc, req);
+    return successResponse(res, doc, "Category created", 201);
+  } catch (error) {
+    if (error.code === 11000) {
+      return res.status(400).json({
+        success: false,
+        message: "Category name or slug already exists"
+      });
+    }
+    throw error;
+  }
 });
 
 export const getCategories = asyncHandler(async (req, res) => {
@@ -51,13 +61,23 @@ export const updateCategory = asyncHandler(async (req, res) => {
   if (req.file) {
     data.icon = `/uploads/${req.file.filename}`;
   }
-  const category = await service.updateCategory(req.params.id, data);
-  if (category) {
-    const doc = category.toObject ? category.toObject() : category;
-    formatCategoryIcon(doc, req);
-    return successResponse(res, doc, "Category updated");
+  try {
+    const category = await service.updateCategory(req.params.id, data);
+    if (category) {
+      const doc = category.toObject ? category.toObject() : category;
+      formatCategoryIcon(doc, req);
+      return successResponse(res, doc, "Category updated");
+    }
+    return successResponse(res, null, "Category not found");
+  } catch (error) {
+    if (error.code === 11000) {
+      return res.status(400).json({
+        success: false,
+        message: "Category name or slug already exists"
+      });
+    }
+    throw error;
   }
-  return successResponse(res, null, "Category not found");
 });
 
 export const deleteCategory = asyncHandler(async (req, res) => {

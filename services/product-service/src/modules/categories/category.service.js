@@ -2,6 +2,15 @@ import { models } from "../../../../../shared/index.js";
 const { Category } = models;
 
 export const createCategory = async (data) => {
+  if (data.name) {
+    const slug = data.slug || data.name
+      .toLowerCase()
+      .trim()
+      .replace(/[^\w\s-]/g, "")
+      .replace(/[\s_-]+/g, "-")
+      .replace(/^-+|-+$/g, "");
+    await Category.deleteMany({ slug, isDeleted: true });
+  }
   const category = await Category.create(data);
   return category;
 };
@@ -21,6 +30,15 @@ export const getCategoryById = async (id) => {
 };
 
 export const updateCategory = async (id, data) => {
+  if (data.name) {
+    const slug = data.slug || data.name
+      .toLowerCase()
+      .trim()
+      .replace(/[^\w\s-]/g, "")
+      .replace(/[\s_-]+/g, "-")
+      .replace(/^-+|-+$/g, "");
+    await Category.deleteMany({ _id: { $ne: id }, slug, isDeleted: true });
+  }
   const category = await Category.findOneAndUpdate(
     { _id: id, isDeleted: false },
     { $set: data },
