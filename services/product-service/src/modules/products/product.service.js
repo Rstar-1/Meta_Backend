@@ -58,3 +58,12 @@ export const deleteProduct = async (id) => {
   if (!product) throw new Error(messages.PRODUCT_NOT_FOUND || "Product not found");
   return { success: true, message: "Product deleted" };
 };
+
+export const createProductReview = async (id, reviewData) => {
+  const product = await Product.findOne({ _id: id, isDeleted: false });
+  if (!product) throw new Error(messages.PRODUCT_NOT_FOUND || "Product not found");
+
+  product.reviews.push(reviewData);
+  await product.save();
+  return product;
+};

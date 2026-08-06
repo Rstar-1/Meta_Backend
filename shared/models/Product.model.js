@@ -11,6 +11,27 @@ const variantSchema = new mongoose.Schema(
   { _id: false }
 );
 
+const reviewSchema = new mongoose.Schema(
+  {
+    createdBy: {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: "User",
+      required: true,
+    },
+    comment: {
+      type: String,
+      required: true,
+    },
+    rating: {
+      type: Number,
+      required: true,
+      min: 0,
+      max: 5,
+    },
+  },
+  { timestamps: true }
+);
+
 const productSchema = new mongoose.Schema(
   {
     name: {
@@ -18,7 +39,19 @@ const productSchema = new mongoose.Schema(
       required: true,
     },
 
+    slug: {
+      type: String,
+      lowercase: true,
+      trim: true,
+    },
+
+    sku: String,
+
+    productCode: String,
+
     description: String,
+
+    shortDesc: String,
 
     categoryId: {
       type: mongoose.Schema.Types.ObjectId,
@@ -47,16 +80,55 @@ const productSchema = new mongoose.Schema(
       required: true,
     },
 
+    unit: String,
+
+    currency: {
+      type: String,
+      default: "INR",
+    },
+
     attributes: {
       type: Map,
       of: mongoose.Schema.Types.Mixed,
     },
+
+    specifications: [
+      {
+        name: String,
+        value: String,
+      }
+    ],
+
+    features: [String],
+
+    badges: [String],
 
     variants: [variantSchema],
 
     totalStock: {
       type: Number,
       default: 0,
+    },
+
+    reservedStock: {
+      type: Number,
+      default: 0,
+    },
+
+    stockStatus: {
+      type: String,
+      enum: ["In Stock", "Out of Stock"],
+      default: "In Stock",
+    },
+
+    isTrending: {
+      type: Boolean,
+      default: false,
+    },
+
+    isBestSeller: {
+      type: Boolean,
+      default: false,
     },
 
     status: {
@@ -74,6 +146,12 @@ const productSchema = new mongoose.Schema(
       type: Boolean,
       default: false,
     },
+
+    metaTitle: String,
+    metaDesc: String,
+    metaKeywords: String,
+
+    reviews: [reviewSchema],
   },
   { timestamps: true, versionKey: false }
 );

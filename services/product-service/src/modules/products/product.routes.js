@@ -5,6 +5,7 @@ import {
   getProductById,
   updateProduct,
   deleteProduct,
+  createProductReview,
 } from "./product.controller.js";
 
 import { middleware } from "../../../../../shared/index.js";
@@ -14,6 +15,12 @@ const router = express.Router();
 
 router.get("/", getProducts);
 router.get("/:id", getProductById);
+
+router.post(
+  "/:id/reviews",
+  authMiddleware,
+  createProductReview
+);
 
 router.post(
   "/",

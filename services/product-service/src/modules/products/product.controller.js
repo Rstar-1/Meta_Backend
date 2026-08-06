@@ -41,3 +41,14 @@ export const deleteProduct = asyncHandler(async (req, res) => {
   await service.deleteProduct(req.params.id);
   return successResponse(res, null, "Product deleted");
 });
+
+export const createProductReview = asyncHandler(async (req, res) => {
+  const { rating, comment } = req.body;
+  const reviewData = {
+    createdBy: req.user.id,
+    rating: Number(rating),
+    comment
+  };
+  const product = await service.createProductReview(req.params.id, reviewData);
+  return successResponse(res, product.reviews, "Review added successfully", 201);
+});

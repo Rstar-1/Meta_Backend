@@ -5,6 +5,7 @@ import cartProxy from "./cart.proxy.js";
 import orderProxy from "./order.proxy.js";
 import paymentProxy from "./payment.proxy.js";
 import roleProxy from "./role.proxy.js";
+import seoProxy from "./seo.proxy.js";
 
 export { 
   authProxy, 
@@ -13,5 +14,6 @@ export {
   cartProxy, 
   orderProxy, 
   paymentProxy, 
-  roleProxy
+  roleProxy,
+  seoProxy
 };
