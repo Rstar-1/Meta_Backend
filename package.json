@@ -13,8 +13,9 @@
     "payment:dev": "npm --prefix services/payment-service run dev",
     "role:dev": "npm --prefix services/role-service run dev",
     "seo:dev": "npm --prefix services/seo-service run dev",
+    "lead:dev": "npm --prefix services/lead-service run dev",
     "gateway:dev": "npm --prefix gateway run dev",
-    "dev": "concurrently -k -n AUTH,USER,PRODUCT,CART,ORDER,PAYMENT,ROLE,SEO,GATEWAY -c blue,green,yellow,magenta,red,orange,purple,gray,cyan \"npm run auth:dev\" \"npm run user:dev\" \"npm run product:dev\" \"npm run cart:dev\" \"npm run order:dev\" \"npm run payment:dev\" \"npm run role:dev\" \"npm run seo:dev\" \"npm run gateway:dev\""
+    "dev": "concurrently -k -n AUTH,USER,PRODUCT,CART,ORDER,PAYMENT,ROLE,SEO,LEAD,GATEWAY -c blue,green,yellow,magenta,red,orange,purple,gray,pink,cyan \"npm run auth:dev\" \"npm run user:dev\" \"npm run product:dev\" \"npm run cart:dev\" \"npm run order:dev\" \"npm run payment:dev\" \"npm run role:dev\" \"npm run seo:dev\" \"npm run lead:dev\" \"npm run gateway:dev\""
   },
   "keywords": [],
   "author": "",

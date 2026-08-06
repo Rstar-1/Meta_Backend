@@ -7,6 +7,7 @@ import Cart from "./Cart.model.js";
 import Order from "./Order.model.js";
 import Payment from "./Payment.model.js";
 import SEO from "./SEO.model.js";
+import Lead from "./Lead.model.js";
 
 export { 
   User, 
@@ -17,5 +18,7 @@ export {
   Cart, 
   Order, 
   Payment,
-  SEO
+  SEO,
+  Lead
 };
+

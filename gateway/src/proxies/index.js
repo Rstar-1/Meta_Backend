@@ -6,6 +6,7 @@ import orderProxy from "./order.proxy.js";
 import paymentProxy from "./payment.proxy.js";
 import roleProxy from "./role.proxy.js";
 import seoProxy from "./seo.proxy.js";
+import leadProxy from "./lead.proxy.js";
 
 export { 
   authProxy, 
@@ -15,5 +16,6 @@ export {
   orderProxy, 
   paymentProxy, 
   roleProxy,
-  seoProxy
+  seoProxy,
+  leadProxy
 };
