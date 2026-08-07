@@ -20,12 +20,7 @@ export const getLeadById = asyncHandler(async (req, res) => {
 });
 
 export const createLead = asyncHandler(async (req, res) => {
-  // If the user specifies `createdBy` in the body, use it. Otherwise fall back to req.user.name or name from token
-  const data = {
-    ...req.body,
-    createdBy: req.body.createdBy || (req.user ? req.user.name || req.user.email : "System")
-  };
-  const lead = await service.createLead(data);
+  const lead = await service.createLead(req.body, req.user);
   return successResponse(res, lead, "Lead created successfully.", 201);
 });
 
