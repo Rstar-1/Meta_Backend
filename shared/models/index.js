@@ -8,6 +8,9 @@ import Order from "./Order.model.js";
 import Payment from "./Payment.model.js";
 import SEO from "./SEO.model.js";
 import Lead from "./Lead.model.js";
+import Blog from "./Blog.model.js";
+import BlogCategory from "./BlogCategory.model.js";
+import Cms from "./Cms.model.js";
 
 export { 
   User, 
@@ -19,6 +22,8 @@ export {
   Order, 
   Payment,
   SEO,
-  Lead
+  Lead,
+  Blog,
+  BlogCategory,
+  Cms
 };
-

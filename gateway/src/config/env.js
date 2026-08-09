@@ -15,6 +15,9 @@ export const env = {
   ROLE_SERVICE_URL: process.env.ROLE_SERVICE_URL || "http://localhost:5007",
   SEO_SERVICE_URL: process.env.SEO_SERVICE_URL || "http://localhost:5008",
   LEAD_SERVICE_URL: process.env.LEAD_SERVICE_URL || "http://localhost:5009",
+  BLOG_SERVICE_URL: process.env.BLOG_SERVICE_URL || "http://localhost:5010",
+  CMS_SERVICE_URL: process.env.CMS_SERVICE_URL || "http://localhost:5011",
   RATE_LIMIT_WINDOW_MS: Number(process.env.RATE_LIMIT_WINDOW_MS) || 60000,
+
   RATE_LIMIT_MAX: Number(process.env.RATE_LIMIT_MAX) || 100
 };

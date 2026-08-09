@@ -13,29 +13,39 @@ export const checkPermission = (requiredPermission) => {
         });
       }
 
-      if (user.role === roles.ADMIN || (user.role === roles.VENDOR && requiredPermission && requiredPermission.startsWith("CATEGORY_"))) {
+      const userRole = user.role?.toLowerCase();
+      const adminRole = roles.ADMIN?.toLowerCase();
+      const vendorRole = roles.VENDOR?.toLowerCase();
+
+      // Admin has access to all routes
+      if (userRole === adminRole) {
         return next();
       }
 
-      if (!Array.isArray(user.permissions)) {
-        return res.status(statusCodes.HTTP_STATUS.FORBIDDEN).json({
-          success: false,
-          message: "Permissions not assigned",
-        });
+      // Vendor has access to CATEGORY_, BLOG_, PRODUCT_, and CMS_ permissions
+      if (
+        (userRole === "vendor" || userRole === vendorRole) &&
+        requiredPermission &&
+        (requiredPermission.startsWith("CATEGORY_") ||
+          requiredPermission.startsWith("BLOG_") ||
+          requiredPermission.startsWith("PRODUCT_") ||
+          requiredPermission.startsWith("CMS_"))
+      ) {
+        return next();
       }
 
       if (requiredPermission === "*") {
         return next();
       }
 
-      if (!user.permissions.includes(requiredPermission)) {
-        return res.status(statusCodes.HTTP_STATUS.FORBIDDEN).json({
-          success: false,
-          message: messages.FORBIDDEN,
-        });
+      if (Array.isArray(user.permissions) && user.permissions.includes(requiredPermission)) {
+        return next();
       }
 
-      return next();
+      return res.status(statusCodes.HTTP_STATUS.FORBIDDEN).json({
+        success: false,
+        message: messages.FORBIDDEN,
+      });
     } catch (error) {
       return res.status(statusCodes.HTTP_STATUS.INTERNAL_SERVER_ERROR).json({
         success: false,

@@ -7,6 +7,8 @@ import paymentProxy from "./payment.proxy.js";
 import roleProxy from "./role.proxy.js";
 import seoProxy from "./seo.proxy.js";
 import leadProxy from "./lead.proxy.js";
+import blogProxy from "./blog.proxy.js";
+import cmsProxy from "./cms.proxy.js";
 
 export { 
   authProxy, 
@@ -17,5 +19,7 @@ export {
   paymentProxy, 
   roleProxy,
   seoProxy,
-  leadProxy
+  leadProxy,
+  blogProxy,
+  cmsProxy
 };
