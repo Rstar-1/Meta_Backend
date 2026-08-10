@@ -5,5 +5,6 @@ import { env } from "../config/env.js";
 const router = express.Router();
 
 router.use("/api/payments", createProxy(env.PAYMENT_SERVICE_URL));
+router.use("/api/payment-integrations", createProxy(env.PAYMENT_SERVICE_URL));
 
 export default router;

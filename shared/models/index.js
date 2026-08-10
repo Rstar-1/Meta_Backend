@@ -6,6 +6,7 @@ import Product from "./Product.model.js";
 import Cart from "./Cart.model.js";
 import Order from "./Order.model.js";
 import Payment from "./Payment.model.js";
+import PaymentIntegration from "./PaymentIntegration.model.js";
 import SEO from "./SEO.model.js";
 import Lead from "./Lead.model.js";
 import Blog from "./Blog.model.js";
@@ -21,6 +22,7 @@ export {
   Cart, 
   Order, 
   Payment,
+  PaymentIntegration,
   SEO,
   Lead,
   Blog,

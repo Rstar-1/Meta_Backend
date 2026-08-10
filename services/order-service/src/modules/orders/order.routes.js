@@ -8,8 +8,11 @@ const router = express.Router();
 router.use(authMiddleware);
 
 router.post("/", orderController.createOrder);
+router.get("/", authorizeRoles("admin", "vendor"), orderController.getAllOrders);
 router.get("/user", orderController.getUserOrders);
 router.get("/:id", orderController.getOrder);
+router.put("/:id", authorizeRoles("admin", "vendor"), orderController.updateOrder);
+router.delete("/:id", authorizeRoles("admin", "vendor"), orderController.deleteOrder);
 router.put("/:id/cancel", orderController.cancelOrder);
 
 // Admin/Vendor routes
@@ -19,3 +22,4 @@ router.put("/:id/status", authorizeRoles("admin", "vendor"), orderController.upd
 router.put("/:id/payment", orderController.updatePayment);
 
 export default router;
+

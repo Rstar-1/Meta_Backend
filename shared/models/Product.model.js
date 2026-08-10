@@ -73,7 +73,10 @@ const productSchema = new mongoose.Schema(
       trim: true,
     },
 
-    images: [String],
+    images: {
+      type: [String],
+      default: [],
+    },
 
     basePrice: {
       type: Number,
@@ -99,9 +102,15 @@ const productSchema = new mongoose.Schema(
       }
     ],
 
-    features: [String],
+    features: {
+      type: [String],
+      default: [],
+    },
 
-    badges: [String],
+    badges: {
+      type: [String],
+      default: [],
+    },
 
     variants: [variantSchema],
 

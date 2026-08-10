@@ -11,3 +11,4 @@ export { configureApp } from "./expressSetup.js";
 export * from "./helpers.js";
 export { loadEnv } from "./envLoader.js";
 export * from "./ensureDirs.js";
+export { encrypt, decrypt } from "./crypto.js";
