@@ -67,12 +67,11 @@ const paymentIntegrationSchema = new mongoose.Schema(
 );
 
 // If marked default, make sure all others are marked non-default
-paymentIntegrationSchema.pre("save", async function (next) {
+paymentIntegrationSchema.pre("save", async function () {
   if (this.isDefault) {
     const PaymentIntegration = mongoose.model("PaymentIntegration");
     await PaymentIntegration.updateMany({ _id: { $ne: this._id } }, { isDefault: false });
   }
-  next();
 });
 
 export default mongoose.model("PaymentIntegration", paymentIntegrationSchema);
