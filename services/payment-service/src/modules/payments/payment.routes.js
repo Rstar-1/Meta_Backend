@@ -17,5 +17,6 @@ router.post("/cod", paymentController.handleCod);
 router.post("/refund", paymentController.refund);
 router.get("/", paymentController.getAllPayments);
 router.get("/:id", paymentController.getPayment);
+router.patch("/:id/status", paymentController.updatePaymentStatus);
 
 export default router;

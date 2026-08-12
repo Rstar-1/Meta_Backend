@@ -50,3 +50,10 @@ export const webhook = asyncHandler(async (req, res) => {
   const result = await paymentService.handleWebhook(req.body, signatureHeader);
   return successResponse(res, result, "Webhook processed successfully");
 });
+
+export const updatePaymentStatus = asyncHandler(async (req, res) => {
+  const { id } = req.params;
+  const { status } = req.body;
+  const updatedPayment = await paymentService.updatePaymentStatusFlow(id, status, req.user);
+  return successResponse(res, updatedPayment, "Payment status updated successfully");
+});

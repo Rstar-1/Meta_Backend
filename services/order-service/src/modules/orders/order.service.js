@@ -116,7 +116,8 @@ const transformOrder = (order, userObj = null) => {
   const creator = obj.createdBy && typeof obj.createdBy === 'object' ? obj.createdBy : null;
   
   let productItems = obj.products && obj.products.length > 0 ? obj.products : (obj.items || []);
-  if (userObj && userObj.role === "vendor") {
+  const role = userObj?.role?.toLowerCase();
+  if (role === "vendor") {
     const vendorId = (userObj._id || userObj.id)?.toString();
     productItems = productItems.filter(item => 
       item.vendorId && item.vendorId.toString() === vendorId
@@ -125,7 +126,7 @@ const transformOrder = (order, userObj = null) => {
   const productNames = productItems.map(item => typeof item === 'object' && item !== null ? item.name : item);
 
   let displayTotalAmount = obj.totalAmount !== undefined ? (typeof obj.totalAmount === 'number' ? `₹ ${obj.totalAmount}` : obj.totalAmount) : "₹ 0";
-  if (userObj && userObj.role === "vendor") {
+  if (role === "vendor") {
     const vendorTotal = productItems.reduce((sum, item) => sum + ((item.price || 0) * (item.quantity || 1)), 0);
     displayTotalAmount = `₹ ${vendorTotal}`;
   }
@@ -213,7 +214,8 @@ export const createDashboardOrder = async (userId, data, userObj = null) => {
 export const getAllOrders = async (filters = {}, userObj = null) => {
   const query = {};
 
-  if (userObj && userObj.role === "vendor") {
+  const role = userObj?.role?.toLowerCase();
+  if (role === "vendor") {
     query["products.vendorId"] = userObj._id || userObj.id;
   }
 
@@ -256,7 +258,8 @@ export const getAllOrders = async (filters = {}, userObj = null) => {
 
 export const getOrderById = async (orderId, userObj = null) => {
   const query = findOrderQuery(orderId);
-  if (userObj && userObj.role === "vendor") {
+  const role = userObj?.role?.toLowerCase();
+  if (role === "vendor") {
     query["products.vendorId"] = userObj._id || userObj.id;
   }
   const order = await Order.findOne(query).populate("createdBy");
@@ -271,10 +274,17 @@ export const getUserOrders = async (userId) => {
 
 export const updateDashboardOrder = async (id, data, userObj = null) => {
   const query = findOrderQuery(id);
-  if (userObj && userObj.role === "vendor") {
+  const role = userObj?.role?.toLowerCase();
+  if (role === "vendor") {
     query["products.vendorId"] = userObj._id || userObj.id;
   }
   const payload = { ...data };
+
+  if (data.createdBy) {
+    const creatorId = typeof data.createdBy === 'object' && data.createdBy !== null ? data.createdBy._id : data.createdBy;
+    payload.createdBy = creatorId;
+    payload.userId = creatorId;
+  }
 
   if (data.products) {
     payload.products = await buildOrderItems(data.products);
@@ -298,7 +308,8 @@ export const updateDashboardOrder = async (id, data, userObj = null) => {
 
 export const deleteOrderById = async (id, userObj = null) => {
   const query = findOrderQuery(id);
-  if (userObj && userObj.role === "vendor") {
+  const role = userObj?.role?.toLowerCase();
+  if (role === "vendor") {
     query["products.vendorId"] = userObj._id || userObj.id;
   }
   const order = await Order.findOneAndDelete(query).populate("createdBy");

@@ -432,7 +432,8 @@ export const getPaymentById = async (id, userObj = null) => {
   const payment = await Payment.findOne(query).populate("orderId").populate("customerId");
   if (!payment) throw new Error("Payment not found");
 
-  if (userObj && userObj.role === "user" && payment.customerId?.toString() !== (userObj._id || userObj.id)?.toString()) {
+  const role = userObj?.role?.toLowerCase();
+  if (userObj && role === "user" && payment.customerId?.toString() !== (userObj._id || userObj.id)?.toString()) {
     throw new Error("Unauthorized access to payment transaction");
   }
   return transformPayment(payment);
@@ -440,7 +441,8 @@ export const getPaymentById = async (id, userObj = null) => {
 
 export const getAllPayments = async (filters = {}, userObj = null) => {
   const query = {};
-  if (userObj && userObj.role === "user") {
+  const role = userObj?.role?.toLowerCase();
+  if (userObj && role === "user") {
     query.customerId = userObj._id || userObj.id;
   }
 
@@ -566,4 +568,21 @@ export const handleWebhook = async (body, signatureHeader) => {
   }
 
   return { success: true };
+};
+
+export const updatePaymentStatusFlow = async (id, status, userObj) => {
+  const role = userObj?.role?.toLowerCase();
+  if (!userObj || role !== "admin") {
+    throw new Error("Only admins can update payment status manually");
+  }
+  const payment = await Payment.findById(id);
+  if (!payment) {
+    throw new Error("Payment not found");
+  }
+  payment.status = status.toLowerCase();
+  if (status.toLowerCase() === "captured" && !payment.paidAt) {
+    payment.paidAt = new Date();
+  }
+  await payment.save();
+  return transformPayment(payment);
 };
