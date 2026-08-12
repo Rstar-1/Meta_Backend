@@ -61,8 +61,8 @@ export const updateStatus = asyncHandler(async (req, res) => {
 // For payment service to update order
 export const updatePayment = asyncHandler(async (req, res) => {
   const { id } = req.params;
-  const { paymentStatus, razorpayOrderId } = req.body;
-  const order = await orderService.updatePaymentStatus(id, paymentStatus, razorpayOrderId);
+  const { paymentStatus, razorpayOrderId, paymentMethod, gatewayOrderId } = req.body;
+  const order = await orderService.updatePaymentStatus(id, paymentStatus, razorpayOrderId || gatewayOrderId, paymentMethod);
   return successResponse(res, order, "Payment status updated");
 });
 

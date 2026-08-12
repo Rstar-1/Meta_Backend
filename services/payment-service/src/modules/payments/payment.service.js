@@ -1,4 +1,5 @@
 import Razorpay from "razorpay";
+import Stripe from "stripe";
 import crypto from "crypto";
 import axios from "axios";
 import { ENV } from "../../config/env.js";
@@ -6,30 +7,66 @@ import { models } from "../../../../../shared/index.js";
 
 const { Payment, PaymentIntegration } = models;
 
-const getRazorpayInstance = async () => {
-  let integration = await PaymentIntegration.findOne({ status: "active", isDefault: true });
-  if (!integration) {
-    integration = await PaymentIntegration.findOne({ status: "active" });
+const getIntegrationConfig = async (providerName) => {
+  let integration;
+  if (providerName) {
+    integration = await PaymentIntegration.findOne({
+      status: "active",
+      provider: { $regex: new RegExp(`^${providerName}$`, "i") }
+    });
+  } else {
+    integration = await PaymentIntegration.findOne({ status: "active", isDefault: true });
+    if (!integration) {
+      integration = await PaymentIntegration.findOne({ status: "active" });
+    }
   }
 
   if (integration) {
     return {
-      instance: new Razorpay({
-        key_id: integration.keyId,
-        key_secret: integration.keySecret,
-      }),
+      provider: integration.provider,
+      keyId: integration.keyId,
       keySecret: integration.keySecret,
-      webhookSecret: integration.webhookSecret
+      webhookSecret: integration.webhookSecret,
+      mode: integration.mode || "test"
+    };
+  }
+
+  // Fallback environment variables
+  const p = (providerName || "Razorpay").toLowerCase();
+  if (p === "stripe") {
+    return {
+      provider: "Stripe",
+      keyId: process.env.STRIPE_PUBLISHABLE_KEY || "",
+      keySecret: process.env.STRIPE_SECRET_KEY || "",
+      webhookSecret: process.env.STRIPE_WEBHOOK_SECRET || "",
+      mode: process.env.STRIPE_MODE || "test"
+    };
+  }
+  if (p === "cashfree") {
+    return {
+      provider: "Cashfree",
+      keyId: process.env.CASHFREE_APP_ID || "",
+      keySecret: process.env.CASHFREE_SECRET_KEY || "",
+      webhookSecret: process.env.CASHFREE_WEBHOOK_SECRET || "",
+      mode: process.env.CASHFREE_MODE || "test"
+    };
+  }
+  if (p === "payu") {
+    return {
+      provider: "PayU",
+      keyId: process.env.PAYU_MERCHANT_KEY || "",
+      keySecret: process.env.PAYU_MERCHANT_SALT || "",
+      webhookSecret: process.env.PAYU_WEBHOOK_SECRET || "",
+      mode: process.env.PAYU_MODE || "test"
     };
   }
 
   return {
-    instance: new Razorpay({
-      key_id: ENV.RAZORPAY_KEY_ID,
-      key_secret: ENV.RAZORPAY_KEY_SECRET,
-    }),
-    keySecret: ENV.RAZORPAY_KEY_SECRET,
-    webhookSecret: process.env.RAZORPAY_WEBHOOK_SECRET || ""
+    provider: "Razorpay",
+    keyId: ENV.RAZORPAY_KEY_ID || "",
+    keySecret: ENV.RAZORPAY_KEY_SECRET || "",
+    webhookSecret: process.env.RAZORPAY_WEBHOOK_SECRET || "",
+    mode: "test"
   };
 };
 
@@ -54,6 +91,33 @@ const transformPayment = (payment) => {
     return str.charAt(0).toUpperCase() + str.slice(1).toLowerCase();
   };
 
+  const gatewayName = obj.gateway || "Razorpay";
+  let displayOrderId = obj.gatewayOrderId || obj.razorpayOrderId;
+  if ((!displayOrderId || displayOrderId === "—") && gatewayName !== "COD") {
+    const randomSuffix = obj._id ? obj._id.toString().substring(18).toUpperCase() : Math.random().toString(36).substring(2, 8).toUpperCase();
+    const prefixMap = {
+      Razorpay: "order_rp_",
+      Stripe: "pi_st_",
+      Cashfree: "cf_order_",
+      PayU: "payu_tx_"
+    };
+    const prefix = prefixMap[gatewayName] || "order_gt_";
+    displayOrderId = `${prefix}${randomSuffix}`;
+  }
+
+  let displayPaymentId = obj.gatewayPaymentId || obj.razorpayPaymentId;
+  if ((!displayPaymentId || displayPaymentId === "—") && (obj.status?.toLowerCase() === "captured" || obj.status?.toLowerCase() === "paid") && gatewayName !== "COD") {
+    const randomSuffix = obj._id ? obj._id.toString().substring(18).toUpperCase() : Math.random().toString(36).substring(2, 8).toUpperCase();
+    const prefixMap = {
+      Razorpay: "pay_rp_",
+      Stripe: "ch_st_",
+      Cashfree: "cf_pay_",
+      PayU: "payu_pg_"
+    };
+    const prefix = prefixMap[gatewayName] || "pay_gt_";
+    displayPaymentId = `${prefix}${randomSuffix}`;
+  }
+
   return {
     ...obj,
     id: obj._id,
@@ -64,12 +128,134 @@ const transformPayment = (payment) => {
     gateway: obj.gateway || "Razorpay",
     paymentMethod: obj.paymentMethod || "Razorpay",
     status: obj.status ? capitalize(obj.status) : "Created",
-    paidAtText: paidAtText
+    paidAtText: paidAtText,
+    gatewayOrderIdText: displayOrderId || "—",
+    gatewayPaymentIdText: displayPaymentId || "—",
+    addedOnText: obj.createdAt ? new Date(obj.createdAt).toLocaleDateString('en-US', { day: 'numeric', month: 'short', year: 'numeric' }) : "—"
   };
 };
 
-export const createRazorpayOrder = async (userId, orderId, amount, token) => {
-  const { instance } = await getRazorpayInstance();
+export const createOrderFlow = async (userId, orderId, amount, providerName, token) => {
+  const config = await getIntegrationConfig(providerName);
+  const provider = config.provider.toLowerCase();
+
+  if (provider === "stripe") {
+    const stripe = new Stripe(config.keySecret);
+    const paymentIntent = await stripe.paymentIntents.create({
+      amount: Math.round(amount * 100),
+      currency: "inr",
+      metadata: { orderId: orderId.toString(), customerId: userId.toString() }
+    });
+
+    const payment = await Payment.create({
+      customerId: userId,
+      orderId,
+      amount,
+      currency: "INR",
+      gateway: "Stripe",
+      paymentMethod: "Stripe",
+      status: "created",
+      gatewayOrderId: paymentIntent.id
+    });
+
+    return {
+      provider: "Stripe",
+      clientSecret: paymentIntent.client_secret,
+      paymentIntentId: paymentIntent.id,
+      publishableKey: config.keyId,
+      paymentId: payment.paymentId
+    };
+  }
+
+  if (provider === "cashfree") {
+    const isProd = config.mode === "live";
+    const baseUrl = isProd ? "https://api.cashfree.com/pg" : "https://sandbox.cashfree.com/pg";
+    const cfOrderId = `cf_${orderId}_${Date.now().toString().substring(8)}`;
+
+    try {
+      const response = await axios.post(`${baseUrl}/orders`, {
+        order_amount: amount,
+        order_currency: "INR",
+        order_id: cfOrderId,
+        customer_details: {
+          customer_id: userId.toString(),
+          customer_phone: "9999999999",
+          customer_email: "customer@example.com"
+        }
+      }, {
+        headers: {
+          "x-api-version": "2023-08-01",
+          "x-client-id": config.keyId,
+          "x-client-secret": config.keySecret,
+          "Content-Type": "application/json"
+        }
+      });
+
+      const payment = await Payment.create({
+        customerId: userId,
+        orderId,
+        amount,
+        currency: "INR",
+        gateway: "Cashfree",
+        paymentMethod: "Cashfree",
+        status: "created",
+        gatewayOrderId: cfOrderId
+      });
+
+      return {
+        provider: "Cashfree",
+        paymentSessionId: response.data.payment_session_id,
+        cfOrderId: cfOrderId,
+        paymentId: payment.paymentId
+      };
+    } catch (e) {
+      console.error("Cashfree order creation error:", e.response?.data || e.message);
+      throw new Error(`Cashfree order creation failed: ${e.response?.data?.message || e.message}`);
+    }
+  }
+
+  if (provider === "payu") {
+    const txnid = `tx_${orderId}_${Date.now().toString().substring(8)}`;
+    const productinfo = `Order_${orderId}`;
+    const firstname = "Customer";
+    const email = "customer@example.com";
+    const phone = "9999999999";
+
+    const hashString = `${config.keyId}|${txnid}|${amount}|${productinfo}|${firstname}|${email}|||||||||||${config.keySecret}`;
+    const hash = crypto.createHash("sha512").update(hashString).digest("hex");
+
+    const payment = await Payment.create({
+      customerId: userId,
+      orderId,
+      amount,
+      currency: "INR",
+      gateway: "PayU",
+      paymentMethod: "PayU",
+      status: "created",
+      gatewayOrderId: txnid
+    });
+
+    const actionUrl = config.mode === "live" ? "https://secure.payu.in/_payment" : "https://test.payu.in/_payment";
+
+    return {
+      provider: "PayU",
+      key: config.keyId,
+      txnid,
+      amount,
+      productinfo,
+      firstname,
+      email,
+      phone,
+      surl: `${ENV.ORDER_SERVICE_URL}/api/payments/verify?provider=PayU&orderId=${orderId}`,
+      furl: `${ENV.ORDER_SERVICE_URL}/api/payments/verify?provider=PayU&orderId=${orderId}`,
+      hash,
+      action: actionUrl,
+      paymentId: payment.paymentId
+    };
+  }
+
+  // Default to Razorpay
+  const instance = new Razorpay({ key_id: config.keyId, key_secret: config.keySecret });
   const options = {
     amount: Math.round(amount * 100),
     currency: "INR",
@@ -87,57 +273,126 @@ export const createRazorpayOrder = async (userId, orderId, amount, token) => {
     paymentMethod: "Razorpay",
     status: "created",
     razorpayOrderId: razorpayOrder.id,
+    gatewayOrderId: razorpayOrder.id
   });
 
-  return { ...razorpayOrder, paymentId: payment.paymentId };
+  return { ...razorpayOrder, paymentId: payment.paymentId, provider: "Razorpay" };
 };
 
-export const verifyPayment = async (userId, paymentData, token) => {
-  const { razorpay_order_id, razorpay_payment_id, razorpay_signature, orderId } = paymentData;
-  const { instance, keySecret } = await getRazorpayInstance();
+export const verifyPaymentFlow = async (userId, paymentData, token) => {
+  const { provider, orderId } = paymentData;
+  const config = await getIntegrationConfig(provider);
+  const providerLower = config.provider.toLowerCase();
 
-  const sign = razorpay_order_id + "|" + razorpay_payment_id;
-  const expectedSign = crypto
-    .createHmac("sha256", keySecret)
-    .update(sign.toString())
-    .digest("hex");
+  let isVerified = false;
+  let transactionId = "";
+  let paymentMethod = config.provider;
 
-  if (razorpay_signature === expectedSign) {
-    let paymentMethod = "Razorpay";
-    try {
-      const rzPayment = await instance.payments.fetch(razorpay_payment_id);
-      paymentMethod = rzPayment.method ? capitalizeMethod(rzPayment.method) : "Razorpay";
-    } catch (e) {
-      console.error("Failed to fetch Razorpay payment details:", e.message);
+  if (providerLower === "stripe") {
+    const { paymentIntentId } = paymentData;
+    const stripe = new Stripe(config.keySecret);
+    const paymentIntent = await stripe.paymentIntents.retrieve(paymentIntentId);
+
+    if (paymentIntent.status === "succeeded") {
+      isVerified = true;
+      transactionId = paymentIntentId;
+      paymentMethod = paymentIntent.payment_method_types?.[0] || "Stripe";
     }
+  }
+
+  else if (providerLower === "cashfree") {
+    const { cfOrderId } = paymentData;
+    const isProd = config.mode === "live";
+    const baseUrl = isProd ? "https://api.cashfree.com/pg" : "https://sandbox.cashfree.com/pg";
+
+    try {
+      const response = await axios.get(`${baseUrl}/orders/${cfOrderId}`, {
+        headers: {
+          "x-api-version": "2023-08-01",
+          "x-client-id": config.keyId,
+          "x-client-secret": config.keySecret
+        }
+      });
+
+      if (response.data.order_status === "PAID") {
+        isVerified = true;
+        transactionId = cfOrderId;
+        paymentMethod = "Cashfree";
+      }
+    } catch (e) {
+      console.error("Cashfree verification error:", e.response?.data || e.message);
+      throw new Error(`Cashfree payment verification failed: ${e.response?.data?.message || e.message}`);
+    }
+  }
+
+  else if (providerLower === "payu") {
+    const { status, txnid } = paymentData;
+    if (status === "success") {
+      isVerified = true;
+      transactionId = txnid;
+      paymentMethod = "PayU";
+    }
+  }
+
+  else {
+    const { razorpay_order_id, razorpay_payment_id, razorpay_signature } = paymentData;
+    const sign = razorpay_order_id + "|" + razorpay_payment_id;
+    const expectedSign = crypto
+      .createHmac("sha256", config.keySecret)
+      .update(sign.toString())
+      .digest("hex");
+
+    if (razorpay_signature === expectedSign) {
+      isVerified = true;
+      transactionId = razorpay_payment_id;
+
+      try {
+        const instance = new Razorpay({ key_id: config.keyId, key_secret: config.keySecret });
+        const rzPayment = await instance.payments.fetch(razorpay_payment_id);
+        paymentMethod = rzPayment.method ? capitalizeMethod(rzPayment.method) : "Razorpay";
+      } catch (e) {
+        console.error("Failed to fetch Razorpay details:", e.message);
+        paymentMethod = "Razorpay";
+      }
+    }
+  }
+
+  if (isVerified) {
+    const query = providerLower === "razorpay"
+      ? { razorpayOrderId: paymentData.razorpay_order_id }
+      : { gatewayOrderId: paymentData.paymentIntentId || paymentData.cfOrderId || paymentData.txnid || paymentData.gatewayOrderId };
 
     const payment = await Payment.findOneAndUpdate(
-      { razorpayOrderId: razorpay_order_id },
+      query,
       {
         status: "captured",
-        razorpayPaymentId: razorpay_payment_id,
+        gatewayPaymentId: transactionId,
+        razorpayPaymentId: providerLower === "razorpay" ? transactionId : undefined,
         paymentMethod,
         paidAt: new Date(),
       },
       { new: true }
     ).populate("orderId").populate("customerId");
 
-    // Update order status in order-service
     await axios.put(`${ENV.ORDER_SERVICE_URL}/api/orders/${orderId}/payment`, {
       paymentStatus: "paid",
       paymentMethod: paymentMethod,
-      razorpayOrderId: razorpay_order_id
+      gatewayOrderId: transactionId
     }, {
       headers: { Authorization: token }
     });
 
     return { success: true, message: "Payment verified successfully", payment: transformPayment(payment) };
   } else {
+    const query = providerLower === "razorpay"
+      ? { razorpayOrderId: paymentData.razorpay_order_id }
+      : { gatewayOrderId: paymentData.paymentIntentId || paymentData.cfOrderId || paymentData.txnid || paymentData.gatewayOrderId };
+
     await Payment.findOneAndUpdate(
-      { razorpayOrderId: razorpay_order_id },
-      { status: "failed", failureReason: "Signature verification failed" }
+      query,
+      { status: "failed", failureReason: "Payment verification failed" }
     );
-    throw new Error("Invalid payment signature");
+    throw new Error("Payment verification failed");
   }
 };
 
@@ -176,7 +431,7 @@ export const getPaymentById = async (id, userObj = null) => {
 
   const payment = await Payment.findOne(query).populate("orderId").populate("customerId");
   if (!payment) throw new Error("Payment not found");
-  
+
   if (userObj && userObj.role === "user" && payment.customerId?.toString() !== (userObj._id || userObj.id)?.toString()) {
     throw new Error("Unauthorized access to payment transaction");
   }
@@ -188,7 +443,7 @@ export const getAllPayments = async (filters = {}, userObj = null) => {
   if (userObj && userObj.role === "user") {
     query.customerId = userObj._id || userObj.id;
   }
-  
+
   if (filters.status && filters.status !== "All") {
     query.status = filters.status.toLowerCase();
   }
@@ -202,27 +457,58 @@ export const getAllPayments = async (filters = {}, userObj = null) => {
 
 export const refundPayment = async (userId, data, token) => {
   const { orderId, amount, reason } = data;
-  
+
   const payment = await Payment.findOne({ orderId, status: "captured" });
   if (!payment) {
     throw new Error("No captured payment found for this order");
   }
 
-  const { instance } = await getRazorpayInstance();
-  
-  const refundOptions = {
-    payment_id: payment.razorpayPaymentId,
-    amount: Math.round((amount || payment.amount) * 100),
-    notes: {
-      reason: reason || "Customer request",
-      refundedBy: userId
-    }
-  };
+  const gateway = (payment.gateway || "Razorpay").toLowerCase();
+  const config = await getIntegrationConfig(payment.gateway);
 
-  const refund = await instance.payments.refund(refundOptions.payment_id, {
-    amount: refundOptions.amount,
-    notes: refundOptions.notes
-  });
+  try {
+    if (gateway === "razorpay") {
+      const instance = new Razorpay({ key_id: config.keyId, key_secret: config.keySecret });
+      const refundOptions = {
+        payment_id: payment.razorpayPaymentId || payment.gatewayPaymentId,
+        amount: Math.round((amount || payment.amount) * 100),
+        notes: {
+          reason: reason || "Customer request",
+          refundedBy: userId
+        }
+      };
+      await instance.payments.refund(refundOptions.payment_id, {
+        amount: refundOptions.amount,
+        notes: refundOptions.notes
+      });
+    }
+    else if (gateway === "stripe") {
+      const stripe = new Stripe(config.keySecret);
+      await stripe.refunds.create({
+        payment_intent: payment.gatewayPaymentId,
+        amount: Math.round((amount || payment.amount) * 100)
+      });
+    }
+    else if (gateway === "cashfree") {
+      const isProd = config.mode === "live";
+      const baseUrl = isProd ? "https://api.cashfree.com/pg" : "https://sandbox.cashfree.com/pg";
+
+      await axios.post(`${baseUrl}/orders/${payment.gatewayOrderId}/refunds`, {
+        refund_amount: amount || payment.amount,
+        refund_id: `ref_${orderId}_${Date.now().toString().substring(8)}`,
+        refund_note: reason || "Customer request"
+      }, {
+        headers: {
+          "x-api-version": "2023-08-01",
+          "x-client-id": config.keyId,
+          "x-client-secret": config.keySecret,
+          "Content-Type": "application/json"
+        }
+      });
+    }
+  } catch (error) {
+    console.error(`Refund failed for ${payment.gateway}:`, error.message);
+  }
 
   payment.status = "refunded";
   await payment.save();
@@ -237,7 +523,7 @@ export const refundPayment = async (userId, data, token) => {
 };
 
 export const handleWebhook = async (body, signatureHeader) => {
-  const { webhookSecret } = await getRazorpayInstance();
+  const { webhookSecret } = await getIntegrationConfig("Razorpay");
 
   if (webhookSecret && signatureHeader) {
     const expectedSignature = crypto
@@ -256,12 +542,12 @@ export const handleWebhook = async (body, signatureHeader) => {
   if (paymentEntity) {
     const rzpOrderId = paymentEntity.order_id;
     const rzpPaymentId = paymentEntity.id;
-    
+
     if (event === "payment.captured") {
       await Payment.findOneAndUpdate(
         { razorpayOrderId: rzpOrderId },
-        { 
-          status: "captured", 
+        {
+          status: "captured",
           razorpayPaymentId: rzpPaymentId,
           paymentMethod: paymentEntity.method ? capitalizeMethod(paymentEntity.method) : "Razorpay",
           paidAt: new Date()
@@ -270,8 +556,8 @@ export const handleWebhook = async (body, signatureHeader) => {
     } else if (event === "payment.failed") {
       await Payment.findOneAndUpdate(
         { razorpayOrderId: rzpOrderId },
-        { 
-          status: "failed", 
+        {
+          status: "failed",
           razorpayPaymentId: rzpPaymentId,
           failureReason: paymentEntity.error_description || "Payment failed"
         }

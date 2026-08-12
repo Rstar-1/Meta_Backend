@@ -90,6 +90,18 @@ orderSchema.pre("validate", async function () {
     }
     this.id = `#ORD-${nextNumber}`;
   }
+
+  if ((!this.razorpayOrderId || !String(this.razorpayOrderId).trim()) && this.paymentMethod && this.paymentMethod !== "COD") {
+    const randomSuffix = Math.random().toString(36).substring(2, 10).toUpperCase();
+    const prefixMap = {
+      Razorpay: "order_rp_",
+      Stripe: "pi_st_",
+      Cashfree: "cf_order_",
+      PayU: "payu_tx_"
+    };
+    const prefix = prefixMap[this.paymentMethod] || "order_gt_";
+    this.razorpayOrderId = `${prefix}${randomSuffix}`;
+  }
 });
 
 export default mongoose.model("Order", orderSchema);

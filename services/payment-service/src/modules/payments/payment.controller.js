@@ -5,17 +5,17 @@ const { successResponse, asyncHandler } = utils;
 
 export const createOrder = asyncHandler(async (req, res) => {
   const userId = req.user._id || req.user.id;
-  const { orderId, amount } = req.body;
+  const { orderId, amount, provider } = req.body;
   const token = req.headers.authorization;
-  const razorpayOrder = await paymentService.createRazorpayOrder(userId, orderId, amount, token);
-  return successResponse(res, razorpayOrder, "Razorpay order created");
+  const orderDetails = await paymentService.createOrderFlow(userId, orderId, amount, provider, token);
+  return successResponse(res, orderDetails, "Payment order/intent created successfully");
 });
 
 export const verifyPayment = asyncHandler(async (req, res) => {
   const userId = req.user._id || req.user.id;
   const paymentData = req.body;
   const token = req.headers.authorization;
-  const result = await paymentService.verifyPayment(userId, paymentData, token);
+  const result = await paymentService.verifyPaymentFlow(userId, paymentData, token);
   return successResponse(res, result.payment, result.message);
 });
 

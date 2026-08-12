@@ -20,6 +20,8 @@ const paymentSchema = new mongoose.Schema(
     },
     razorpayOrderId: String,
     razorpayPaymentId: String,
+    gatewayOrderId: String,
+    gatewayPaymentId: String,
     amount: Number,
     currency: {
       type: String,
@@ -53,6 +55,44 @@ paymentSchema.pre("validate", async function () {
       }
     }
     this.paymentId = `#PAY-${nextNumber}`;
+  }
+
+  if (!this.gateway) {
+    this.gateway = this.paymentMethod || "Razorpay";
+  }
+
+  const gatewayName = this.gateway || "Razorpay";
+
+  if ((!this.razorpayOrderId || !String(this.razorpayOrderId).trim()) && gatewayName !== "COD") {
+    const randomSuffix = Math.random().toString(36).substring(2, 10).toUpperCase();
+    const prefixMap = {
+      Razorpay: "order_rp_",
+      Stripe: "pi_st_",
+      Cashfree: "cf_order_",
+      PayU: "payu_tx_"
+    };
+    const prefix = prefixMap[gatewayName] || "order_gt_";
+    this.razorpayOrderId = `${prefix}${randomSuffix}`;
+  }
+
+  if (!this.gatewayOrderId || !String(this.gatewayOrderId).trim()) {
+    this.gatewayOrderId = this.razorpayOrderId;
+  }
+
+  if (this.status === "captured" && (!this.razorpayPaymentId || !String(this.razorpayPaymentId).trim()) && gatewayName !== "COD") {
+    const randomSuffix = Math.random().toString(36).substring(2, 10).toUpperCase();
+    const prefixMap = {
+      Razorpay: "pay_rp_",
+      Stripe: "ch_st_",
+      Cashfree: "cf_pay_",
+      PayU: "payu_pg_"
+    };
+    const prefix = prefixMap[gatewayName] || "pay_gt_";
+    this.razorpayPaymentId = `${prefix}${randomSuffix}`;
+  }
+
+  if (!this.gatewayPaymentId || !String(this.gatewayPaymentId).trim()) {
+    this.gatewayPaymentId = this.razorpayPaymentId;
   }
 });
 

@@ -26,12 +26,18 @@ const sanitizePayload = (data) => {
 const transformIntegration = (doc) => {
   if (!doc) return null;
   const obj = doc.toObject ? doc.toObject() : doc;
+  
+  const hasKeySecret = doc.get ? !!doc.get('keySecret') : !!doc.keySecret;
+  const hasWebhookSecret = doc.get ? !!doc.get('webhookSecret') : !!doc.webhookSecret;
+
   delete obj.keySecret;
   delete obj.webhookSecret;
 
   return {
     ...obj,
     id: obj._id,
+    keySecret: hasKeySecret ? "••••••••" : "",
+    webhookSecret: hasWebhookSecret ? "••••••••" : "",
     supportedMethodsText: Array.isArray(obj.supportedMethods) ? obj.supportedMethods.join(", ") : (obj.supportedMethods || ""),
     isDefaultText: obj.isDefault ? "Yes" : "No",
   };
@@ -59,6 +65,28 @@ export const updateIntegration = async (id, data) => {
   if (!integration) throw new Error("Payment integration not found");
 
   const payload = sanitizePayload(data);
+
+  // If secret keys are masked or empty, retain original values in DB
+  if (
+    payload.keySecret === undefined ||
+    payload.keySecret === null ||
+    payload.keySecret === "" ||
+    payload.keySecret === "••••••••" ||
+    payload.keySecret.includes("••••")
+  ) {
+    delete payload.keySecret;
+  }
+
+  if (
+    payload.webhookSecret === undefined ||
+    payload.webhookSecret === null ||
+    payload.webhookSecret === "" ||
+    payload.webhookSecret === "••••••••" ||
+    payload.webhookSecret.includes("••••")
+  ) {
+    delete payload.webhookSecret;
+  }
+
   Object.assign(integration, payload);
   await integration.save();
   return transformIntegration(integration);

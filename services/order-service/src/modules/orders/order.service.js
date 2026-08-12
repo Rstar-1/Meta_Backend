@@ -68,7 +68,8 @@ const syncPaymentRecord = async (order) => {
         gateway: order.paymentMethod || "Razorpay",
         paymentMethod: order.paymentMethod || "Razorpay",
         status: payStatus,
-        ...(order.razorpayOrderId ? { razorpayOrderId: order.razorpayOrderId } : {}),
+        razorpayOrderId: order.razorpayOrderId,
+        gatewayOrderId: order.razorpayOrderId || order.gatewayOrderId,
         ...(payStatus === "captured" ? { paidAt: new Date() } : {})
       });
     } else {
@@ -77,7 +78,10 @@ const syncPaymentRecord = async (order) => {
       existingPayment.gateway = order.paymentMethod || existingPayment.gateway || "Razorpay";
       existingPayment.paymentMethod = order.paymentMethod || existingPayment.paymentMethod || "Razorpay";
       existingPayment.status = payStatus;
-      if (order.razorpayOrderId) existingPayment.razorpayOrderId = order.razorpayOrderId;
+      if (order.razorpayOrderId) {
+        existingPayment.razorpayOrderId = order.razorpayOrderId;
+        existingPayment.gatewayOrderId = order.razorpayOrderId;
+      }
       if (payStatus === "captured" && !existingPayment.paidAt) existingPayment.paidAt = new Date();
       await existingPayment.save();
     }

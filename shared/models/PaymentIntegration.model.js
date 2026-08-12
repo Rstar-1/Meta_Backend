@@ -57,8 +57,16 @@ const paymentIntegrationSchema = new mongoose.Schema(
     toJSON: { 
       getters: true,
       transform: (doc, ret) => {
-        delete ret.keySecret;
-        delete ret.webhookSecret;
+        if (doc.keySecret) {
+          ret.keySecret = "••••••••";
+        } else {
+          delete ret.keySecret;
+        }
+        if (doc.webhookSecret) {
+          ret.webhookSecret = "••••••••";
+        } else {
+          delete ret.webhookSecret;
+        }
         return ret;
       }
     },
