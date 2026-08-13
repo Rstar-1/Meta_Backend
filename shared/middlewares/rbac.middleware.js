@@ -17,8 +17,8 @@ export const checkPermission = (requiredPermission) => {
       const adminRole = roles.ADMIN?.toLowerCase();
       const vendorRole = roles.VENDOR?.toLowerCase();
 
-      // Admin has access to all routes
-      if (userRole === adminRole) {
+      // Admin and Manager have access to all routes
+      if (userRole === adminRole || userRole === "manager") {
         return next();
       }
 
@@ -69,8 +69,12 @@ export const authorizeRoles = (...allowedRoles) => {
       }
 
       const userRole = user.role?.toLowerCase();
+      const rolesList = allowedRoles.map(r => r.toLowerCase());
+      if (rolesList.includes("admin") && !rolesList.includes("manager")) {
+        rolesList.push("manager");
+      }
 
-      if (!allowedRoles.map(r => r.toLowerCase()).includes(userRole)) {
+      if (!rolesList.includes(userRole)) {
         return res.status(statusCodes.HTTP_STATUS.FORBIDDEN).json({
           success: false,
           message: messages.FORBIDDEN,
