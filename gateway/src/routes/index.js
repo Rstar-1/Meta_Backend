@@ -10,7 +10,9 @@ import {
   seoProxy,
   leadProxy,
   blogProxy,
-  cmsProxy
+  cmsProxy,
+  dashboardProxy,
+  analyticProxy
 } from "../proxies/index.js";
 import healthRoutes from "./health.routes.js";
 
@@ -27,6 +29,8 @@ router.use(seoProxy);
 router.use(leadProxy);
 router.use(blogProxy);
 router.use(cmsProxy);
+router.use(dashboardProxy);
+router.use(analyticProxy);
 router.use("/healthgateway", healthRoutes);
 
 export default router;

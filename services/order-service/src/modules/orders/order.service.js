@@ -119,16 +119,25 @@ const transformOrder = (order, userObj = null) => {
   const role = userObj?.role?.toLowerCase();
   if (role === "vendor") {
     const vendorId = (userObj._id || userObj.id)?.toString();
-    productItems = productItems.filter(item => 
-      item.vendorId && item.vendorId.toString() === vendorId
-    );
+    const createdById = (obj.createdBy && typeof obj.createdBy === 'object') 
+      ? obj.createdBy._id?.toString() 
+      : obj.createdBy?.toString();
+    const userId = obj.userId?.toString();
+
+    if (createdById !== vendorId && userId !== vendorId) {
+      productItems = productItems.filter(item => 
+        item.vendorId && item.vendorId.toString() === vendorId
+      );
+    }
   }
   const productNames = productItems.map(item => typeof item === 'object' && item !== null ? item.name : item);
 
   let displayTotalAmount = obj.totalAmount !== undefined ? (typeof obj.totalAmount === 'number' ? `₹ ${obj.totalAmount}` : obj.totalAmount) : "₹ 0";
   if (role === "vendor") {
     const vendorTotal = productItems.reduce((sum, item) => sum + ((item.price || 0) * (item.quantity || 1)), 0);
-    displayTotalAmount = `₹ ${vendorTotal}`;
+    if (vendorTotal > 0) {
+      displayTotalAmount = `₹ ${vendorTotal}`;
+    }
   }
 
   return {
@@ -213,10 +222,18 @@ export const createDashboardOrder = async (userId, data, userObj = null) => {
 
 export const getAllOrders = async (filters = {}, userObj = null) => {
   const query = {};
+  const andConditions = [];
 
   const role = userObj?.role?.toLowerCase();
   if (role === "vendor") {
-    query["products.vendorId"] = userObj._id || userObj.id;
+    const vendorId = userObj._id || userObj.id;
+    andConditions.push({
+      $or: [
+        { "products.vendorId": vendorId },
+        { createdBy: vendorId },
+        { userId: vendorId }
+      ]
+    });
   }
 
   if (filters.search) {
@@ -229,27 +246,37 @@ export const getAllOrders = async (filters = {}, userObj = null) => {
     }).select("_id");
     
     const userIds = matchingUsers.map(u => u._id);
-    query.$or = [
-      { id: searchRegex },
-      { createdBy: { $in: userIds } },
-      { userId: { $in: userIds } },
-      { "address.fullName": searchRegex },
-      { "address.phone": searchRegex }
-    ];
+    andConditions.push({
+      $or: [
+        { id: searchRegex },
+        { createdBy: { $in: userIds } },
+        { userId: { $in: userIds } },
+        { "address.fullName": searchRegex },
+        { "address.phone": searchRegex }
+      ]
+    });
   }
 
   if (filters.orderStatus && filters.orderStatus !== "All") {
-    query.$or = [
-      { orderStatus: filters.orderStatus },
-      { status: filters.orderStatus.toLowerCase() }
-    ];
+    andConditions.push({
+      $or: [
+        { orderStatus: filters.orderStatus },
+        { status: filters.orderStatus.toLowerCase() }
+      ]
+    });
   }
 
   if (filters.paymentStatus && filters.paymentStatus !== "All") {
-    query.$or = [
-      { paymentStatus: filters.paymentStatus },
-      { paymentStatus: filters.paymentStatus.toLowerCase() }
-    ];
+    andConditions.push({
+      $or: [
+        { paymentStatus: filters.paymentStatus },
+        { paymentStatus: filters.paymentStatus.toLowerCase() }
+      ]
+    });
+  }
+
+  if (andConditions.length > 0) {
+    query.$and = andConditions;
   }
 
   const orders = await Order.find(query).populate("createdBy").sort({ createdAt: -1 });
@@ -257,11 +284,26 @@ export const getAllOrders = async (filters = {}, userObj = null) => {
 };
 
 export const getOrderById = async (orderId, userObj = null) => {
-  const query = findOrderQuery(orderId);
+  const baseQuery = findOrderQuery(orderId);
+  let query = { ...baseQuery };
   const role = userObj?.role?.toLowerCase();
+  
   if (role === "vendor") {
-    query["products.vendorId"] = userObj._id || userObj.id;
+    const vendorId = userObj._id || userObj.id;
+    query = {
+      $and: [
+        baseQuery,
+        {
+          $or: [
+            { "products.vendorId": vendorId },
+            { createdBy: vendorId },
+            { userId: vendorId }
+          ]
+        }
+      ]
+    };
   }
+
   const order = await Order.findOne(query).populate("createdBy");
   if (!order) throw new Error("Order not found");
   return transformOrder(order, userObj);
@@ -273,11 +315,26 @@ export const getUserOrders = async (userId) => {
 };
 
 export const updateDashboardOrder = async (id, data, userObj = null) => {
-  const query = findOrderQuery(id);
+  const baseQuery = findOrderQuery(id);
+  let query = { ...baseQuery };
   const role = userObj?.role?.toLowerCase();
+  
   if (role === "vendor") {
-    query["products.vendorId"] = userObj._id || userObj.id;
+    const vendorId = userObj._id || userObj.id;
+    query = {
+      $and: [
+        baseQuery,
+        {
+          $or: [
+            { "products.vendorId": vendorId },
+            { createdBy: vendorId },
+            { userId: vendorId }
+          ]
+        }
+      ]
+    };
   }
+
   const payload = { ...data };
 
   if (data.createdBy) {
@@ -307,11 +364,26 @@ export const updateDashboardOrder = async (id, data, userObj = null) => {
 };
 
 export const deleteOrderById = async (id, userObj = null) => {
-  const query = findOrderQuery(id);
+  const baseQuery = findOrderQuery(id);
+  let query = { ...baseQuery };
   const role = userObj?.role?.toLowerCase();
+  
   if (role === "vendor") {
-    query["products.vendorId"] = userObj._id || userObj.id;
+    const vendorId = userObj._id || userObj.id;
+    query = {
+      $and: [
+        baseQuery,
+        {
+          $or: [
+            { "products.vendorId": vendorId },
+            { createdBy: vendorId },
+            { userId: vendorId }
+          ]
+        }
+      ]
+    };
   }
+
   const order = await Order.findOneAndDelete(query).populate("createdBy");
   if (!order) throw new Error("Order not found");
 

@@ -9,6 +9,8 @@ import seoProxy from "./seo.proxy.js";
 import leadProxy from "./lead.proxy.js";
 import blogProxy from "./blog.proxy.js";
 import cmsProxy from "./cms.proxy.js";
+import dashboardProxy from "./dashboard.proxy.js";
+import analyticProxy from "./analytic.proxy.js";
 
 export { 
   authProxy, 
@@ -21,5 +23,7 @@ export {
   seoProxy,
   leadProxy,
   blogProxy,
-  cmsProxy
+  cmsProxy,
+  dashboardProxy,
+  analyticProxy
 };

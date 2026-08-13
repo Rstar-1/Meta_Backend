@@ -16,8 +16,10 @@
     "lead:dev": "npm --prefix services/lead-service run dev",
     "blog:dev": "npm --prefix services/blog-service run dev",
     "cms:dev": "npm --prefix services/cms-service run dev",
+    "dashboard:dev": "npm --prefix services/dashboard-service run dev",
+    "analytic:dev": "npm --prefix services/analytic-service run dev",
     "gateway:dev": "npm --prefix gateway run dev",
-    "dev": "concurrently -k -n AUTH,USER,PRODUCT,CART,ORDER,PAYMENT,ROLE,SEO,LEAD,BLOG,CMS,GATEWAY -c blue,green,yellow,magenta,red,orange,purple,gray,pink,bgBlue,bgGreen,cyan \"npm run auth:dev\" \"npm run user:dev\" \"npm run product:dev\" \"npm run cart:dev\" \"npm run order:dev\" \"npm run payment:dev\" \"npm run role:dev\" \"npm run seo:dev\" \"npm run lead:dev\" \"npm run blog:dev\" \"npm run cms:dev\" \"npm run gateway:dev\""
+    "dev": "concurrently -k -n AUTH,USER,PRODUCT,CART,ORDER,PAYMENT,ROLE,SEO,LEAD,BLOG,CMS,DASHBOARD,ANALYTIC,GATEWAY -c blue,green,yellow,magenta,red,orange,purple,gray,pink,bgBlue,bgGreen,bgCyan,bgRed,cyan \"npm run auth:dev\" \"npm run user:dev\" \"npm run product:dev\" \"npm run cart:dev\" \"npm run order:dev\" \"npm run payment:dev\" \"npm run role:dev\" \"npm run seo:dev\" \"npm run lead:dev\" \"npm run blog:dev\" \"npm run cms:dev\" \"npm run dashboard:dev\" \"npm run analytic:dev\" \"npm run gateway:dev\""
   },
   "keywords": [],
   "author": "",
